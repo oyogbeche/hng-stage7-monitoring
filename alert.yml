@@ -1,0 +1,69 @@
+groups:
+  - name: 'node_exporter'
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected on {{ $labels.instance }}"
+          description: " Instance {{ $labels.instance }} CPU usage has exceeded 80% for over 2 minutes."
+
+      - alert: CPUUsageRecovered
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) < 80
+        for: 2m
+        labels:
+          severity: info
+        annotations:
+          summary: "CPU usage back to normal on {{ $labels.instance }}"
+          description: " Instance {{ $labels.instance }} CPU usage is now below 80%."
+      
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Memory usage detected on {{ $labels.instance }}"
+          description: "Instance {{ $labels.instance }} has high memory usage (> 80%) for more than 2 minutes."
+      
+      - alert: MemoryUsageRecovered
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 < 80
+        for: 2m
+        labels:
+          severity: info
+        annotations:
+          summary: "Memory usage back to normal on {{ $labels.instance }}"
+          description: " Instance {{$labels.instance}} Memory usage is now below 80%."
+
+
+
+  - name: 'blackbox_exporter'
+    rules:
+      - alert: ServerDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Server is DOWN! {{ $labels.instance }}"
+          description: "Server has been unreachable for more than 1 minute."
+      
+      - alert: ServerRecovered
+        expr: probe_success == 1
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "Server is back online {{ $labels.instance }}"
+          description: "The server is now reachable."
+
+      - alert: SSLCertExpiry
+        expr: probe_ssl_earliest_cert_expiry - time() < 864000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL Certificate Expiry Alert {{ $labels.instance }}"
+          description: "SSL Certificate for {{ $labels.instance }} will expire in less than 10 days."

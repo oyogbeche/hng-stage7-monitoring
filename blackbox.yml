@@ -1,0 +1,45 @@
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200]
+      method: GET
+      headers:
+        Host: "genz.ad" 
+      no_follow_redirects: false
+      fail_if_ssl: false
+      fail_if_not_ssl: true
+      preferred_ip_protocol: "ip4"
+      tls_config:
+        insecure_skip_verify: false
+
+  http_2xx_with_latency:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200]
+      method: GET
+      headers:
+        Host: "genz.ad"
+      no_follow_redirects: false
+      fail_if_ssl: false
+      fail_if_not_ssl: true
+      preferred_ip_protocol: "ip4"
+      tls_config:
+        insecure_skip_verify: false
+
+  ssl_expiry:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [] 
+      method: GET
+      headers:
+        Host: "genz.ad"
+      no_follow_redirects: false
+      fail_if_ssl: false
+      fail_if_not_ssl: true
+      preferred_ip_protocol: "ip4"
+      tls_config:
+        insecure_skip_verify: false

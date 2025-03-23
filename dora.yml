@@ -1,0 +1,35 @@
+server:
+  port: 9201
+
+github:
+  owner: "your-github-org-or-user" 
+  repo: "your-repo-name"  
+  token: "your-github-token" 
+
+metrics:
+  deployment_frequency:
+    enabled: true
+    interval: "24h" 
+    event_type: "deployment" 
+
+  lead_time_for_changes:
+    enabled: true
+    event_type: "push" 
+    deployment_event: "deployment"
+    measure: "time_diff"
+
+  change_failure_rate:
+    enabled: true
+    event_type: "deployment"
+    failure_event: "workflow_run"
+    failure_status: ["failure", "cancelled"] 
+
+  mean_time_to_restore:
+    enabled: true
+    failure_event: "incident"
+    resolution_event: "deployment"  
+
+logging:
+  level: "info" 
+
+refresh_interval: "5m" 
