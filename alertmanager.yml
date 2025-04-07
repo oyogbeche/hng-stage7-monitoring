@@ -1,37 +1,64 @@
 global:
   resolve_timeout: 5m
+
 route:
-  receiver: 'slack-alerts'
-  group_by: ['serverity' , instance]
+  receiver: 'default-alerts'
+  group_by: ['severity', 'instance', 'job']
   group_wait: 10s
   group_interval: 5m
   repeat_interval: 1h
   routes:
     - match:
         severity: "critical"
-      group_by: ['serverity' , instance]
-      group_wait: 10s
-      group_interval: 1m
-      repeat_interval: 15m
-      receiver: 'slack-alerts'
+      group_by: ['alertname', 'service', 'severity']
+      group_wait: 5s
+      group_interval: 30s
+      repeat_interval: 10m
+      receiver: 'critical-alerts'
     - match:
         severity: "warning"
-      group_by: ['serverity' , instance]
-      group_wait: 2m
-      group_interval: 5m
+      group_by: ['alertname', 'service', 'severity']
+      group_wait: 5m
+      group_interval: 20m
       repeat_interval: 1h
-      receiver: 'slack-alerts'
+      receiver: 'warning-alerts'
     - match:
         severity: "info"
-      group_by: ['serverity' , instance]
+      group_by: ['alertname', 'service', 'severity']
       group_wait: 2m
       group_interval: 10m
-      repeat_interval: 4h
-      receiver: 'slack-alerts'
+      repeat_interval: 6h
+      receiver: 'info-alerts'
+
 receivers:
-  - name: 'slack-alerts'
+  - name: 'default-alerts'
     slack_configs:
       - channel: "#DevOps-Alerts"
         api_url: "slack-webhook-url"
         send_resolved: true
-        text: "{{ range .Alerts }}{{ if or (eq .Status \"resolved\") (eq .Status \"recovered\") }}🟢 {{ .Annotations.summary }}{{ else }}🔥 {{ .Annotations.summary }}{{ end }}\n\n📌 Description:\n{{ .Annotations.description }}\n\n🔍 Details:\n{{ range .Labels.SortedPairs }}• {{ .Name }}: {{ .Value }}\n{{ end }}\n\n👥 DevOps Team:\n<@U08AD13BJLX> <@U08BC0TS0JU> <@U08AMNS7V6W> <@U08AHB1D85C>\n{{ end }}"
+        title: "{{ .GroupLabels.alertname }} - {{ .CommonLabels.severity | toUpper }}"
+        text: "{{ range .Alerts }}{{ if or (eq .Status \"resolved\") (eq .Status \"recovered\") }}🟢 *RESOLVED*: {{ .Annotations.summary }}\n\n📌 *Previous Issue:*\n{{ .Annotations.description }}{{ else }}⚠️ {{ .Annotations.summary }}\n\n📌 *Description:*\n{{ .Annotations.description }}\n\n🔍 *Details:*\n{{ range .Labels.SortedPairs }}• *{{ .Name | printf \"%s\" | title }}*: {{ .Value }}\n{{ end }}{{ end }}\n\n👥 *DevOps Team:*\n<@U08AD13BJLX> <@U08BC0TS0JU> <@U08AHB1D85C>\n{{ end }}"
+  - name: 'critical-alerts'
+    slack_configs:
+      - channel: "#DevOps-Alerts"
+        api_url: "slack-webhook-url"
+        send_resolved: true
+        title: "{{ .GroupLabels.alertname }} - CRITICAL ALERT"
+        text: "{{ range .Alerts }}{{ if or (eq .Status \"resolved\") (eq .Status \"recovered\") }}🟢 *RESOLVED*: {{ .Annotations.summary }}\n\n📌 *Previous Issue:*\n{{ .Annotations.description }}{{ else }}🔴 *CRITICAL ALERT* 🔴 {{ .Annotations.summary }}\n\n📌 *Description:*\n{{ .Annotations.description }}\n\n🔍 *Details:*\n{{ range .Labels.SortedPairs }}• *{{ .Name | printf \"%s\" | title }}*: {{ .Value }}\n{{ end }}\n{{ if .Labels.job }}• *Job*: {{ .Labels.job }}\n{{ end }}{{ end }}\n👥 *DevOps Team:*\n<@U08AD13BJLX> <@U08BC0TS0JU> <@U08AHB1D85C>\n{{ end }}"
+        icon_emoji: ":red_circle:"
+  - name: 'warning-alerts'
+    slack_configs:
+      - channel: "#DevOps-Alerts"
+        api_url: "slack-webhook-url"
+        send_resolved: true
+        title: "{{ .GroupLabels.alertname }} - WARNING"
+        text: "{{ range .Alerts }}{{ if or (eq .Status \"resolved\") (eq .Status \"recovered\") }}🟢 *RESOLVED*: {{ .Annotations.summary }}\n\n📌 *Previous Issue:*\n{{ .Annotations.description }}{{ else }}🟡 *WARNING* {{ .Annotations.summary }}\n\n📌 *Description:*\n{{ .Annotations.description }}\n\n🔍 *Details:*\n{{ range .Labels.SortedPairs }}• *{{ .Name | printf \"%s\" | title }}*: {{ .Value }}\n{{ end }}\n{{ if .Labels.job }}• *Job*: {{ .Labels.job }}\n{{ end }}{{ end }}\n👥 *DevOps Team:*\n<@U08AD13BJLX> <@U08BC0TS0JU> <@U08AHB1D85C>\n{{ end }}"
+        icon_emoji: ":warning:"
+  - name: 'info-alerts'
+    slack_configs:
+      - channel: "#DevOps-Alerts"
+        api_url: "slack-webhook-url"
+        send_resolved: true
+        title: "{{ .GroupLabels.alertname }} - INFO"
+        text: "{{ range .Alerts }}{{ if or (eq .Status \"resolved\") (eq .Status \"recovered\") }}🟢 *RESOLVED*: {{ .Annotations.summary }}\n\n📌 *Previous Issue:*\n{{ .Annotations.description }}{{ else }}🔵 {{ .Annotations.summary }}\n\n📌 *Description:*\n{{ .Annotations.description }}\n\n🔍 *Details:*\n{{ range .Labels.SortedPairs }}• *{{ .Name | printf \"%s\" | title }}*: {{ .Value }}\n{{ end }}\n{{ if .Labels.job }}• *Job*: {{ .Labels.job }}\n{{ end }}{{ end }}\n👥 *DevOps Team:*\n<@U08AD13BJLX> <@U08BC0TS0JU> <@U08AHB1D85C>\n{{ end }}"
+        icon_emoji: ":information_source:"
